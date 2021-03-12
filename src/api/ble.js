@@ -1,3 +1,5 @@
+import CBOR from './cbor';
+
 const SERVICE_UUID = "0000fffd-0000-1000-8000-00805f9b34fa";
 const CHARACTERISTIC_CONTROLPOINT_UUID = "f1d0fff1-deaa-ecee-b42f-c9ba7ed623bb";
 const CHARACTERISTIC_STATUS_UUID = "f1d0fff2-deaa-ecee-b42f-c9ba7ed623bb";
@@ -13,7 +15,10 @@ var pSrbBitCharacteristic;
 var pSrbCharacteristic;
 var decoder = new TextDecoder("utf-8");
 
+var cbor_value;
+
 export default {
+    cbor_value,
     fromHexString(hexString) {
         return new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
     },
@@ -21,6 +26,8 @@ export default {
         var chara = event.target;
         var value = chara.value;
         console.log(value);
+        CBOR.decodeCBOR(value);
+        cbor_value = value;
     },
     async connect() {
         let options = {};
@@ -41,13 +48,13 @@ export default {
     async disconnect() {
         device.gatt.disconnect();
     },
-    async startNotify(characteristic) {
-        characteristic.addEventListener('characteristicvaluechanged', this.onReceiveData);
+    async startNotify(characteristic, event_function) {
+        characteristic.addEventListener('characteristicvaluechanged', event_function);
         characteristic.startNotifications();
     },
-    async stopNotify(characteristic) {
+    async stopNotify(characteristic, event_function) {
         characteristic.stopNotifications();
-        characteristic.removeEventListener('characteristicvaluechanged', this.onReceiveData);
+        characteristic.removeEventListener('characteristicvaluechanged', event_function);
     },
     /* in/out function */
     async readValue(characteristic) {
@@ -63,12 +70,12 @@ export default {
     async writeControlPoint(request) {
         this.writeValue(pCpCharacteristic, request);
     },
-    async startStatus() {
-        this.startNotify(pStatusCharacteristic);
+    async startStatus(event_function) {
+        this.startNotify(pStatusCharacteristic, event_function);
         console.log("FIDO Status Registered.");
     },
-    async stopStatus() {
-        this.stopNotify(pStatusCharacteristic);
+    async stopStatus(event_function) {
+        this.stopNotify(pStatusCharacteristic, event_function);
         console.log("FIDO Status Unregistered.");
     },
     async readControlPointLength() {
