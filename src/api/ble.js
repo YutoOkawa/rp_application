@@ -119,12 +119,13 @@ export default {
     /* ---------------------I/O function-------------------- */
     /**
      * characteristicからValueを読み取る
-     * @param {characteristic} characteristic 
+     * @param {characteristic} characteristic
+     * @returns 読み取ったValue
      */
     async readValue(characteristic) {
         var response = await characteristic.readValue();
         var str = decoder.decode(response);
-        console.log(str);
+        return str;
     },
     /**
      * characteristicにValueを書き込む
@@ -161,17 +162,21 @@ export default {
     },
     /**
      * FIDO Control Point LengthからValueを読み取る
+     * @returns 読み取ったValue
      */
     async readControlPointLength() {
-        this.readValue(pCpLengthCharacteristic);
+        var value = this.readValue(pCpLengthCharacteristic);
         console.log("FIDO Control Point Length");
+        return value;
     },
     /**
      * FIDO Serive Revision BitfieldからValueを読み取る
+     * @returns 読み取ったValue
      */
     async readServiveRevisionBitfield() {
-        this.readValue(pSrbBitCharacteristic);
+        var value = this.readValue(pSrbBitCharacteristic);
         console.log("FIDO Service Revision Bitfield - read");
+        return value;
     },
     /**
      * FIDO Service Revision BitfieldにValueを書き込む
@@ -182,9 +187,11 @@ export default {
     },
     /**
      * FIDO Service RevisionからValueを読み取る
+     * @returns 読み取ったValue
      */
     async readServiceRevision() {
-        this.readValue(pSrbCharacteristic);
+        var value = this.readValue(pSrbCharacteristic);
         console.log("FIDO Service Revision");
+        return value;
     }
 }
