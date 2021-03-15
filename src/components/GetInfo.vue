@@ -33,16 +33,25 @@ export default {
       }
   },
   methods: {
+      /**
+       * BLE機器を接続してNotifyを登録する
+       */
       async connect() {
           await ble.connect();
           console.log("BLE connect!");
           await ble.startStatus(this.onReceiveData);
       },
+      /**
+       * BLE機器のNotifyを削除して接続解除する
+       */
       async disconnect() {
           await ble.stopStatus(this.onReceiveData);
           await ble.disconnect();
           console.log("BLE disconnect.");
       },
+      /**
+       * Control Pointに値を書き込む
+       */
       async writeControlPoint(request) {
           await ble.writeControlPoint(request);
       },
