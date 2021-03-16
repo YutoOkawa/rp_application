@@ -8,6 +8,8 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "axios": "^0.21.1",
+    "base64url": "^3.0.1",
     "cbor": "^7.0.3",
     "core-js": "^3.6.5",
     "node-inspect-extracted": "^1.0.3",
