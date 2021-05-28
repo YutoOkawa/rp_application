@@ -39,17 +39,33 @@ export default {
      * @param {*} clientDataHash 
      * @returns attestationMakeCredentialのパラメータ
      */
-    generateMakeCredentialParameter(attestation, clientDataHash) {
+    generateMakeCredentialParameter(attestation, clientDataHash, keydata) {
         var makeCredentialParam = new Map();
         makeCredentialParam.set(0x01, clientDataHash);
         makeCredentialParam.set(0x02, attestation.rp);
         makeCredentialParam.set(0x03, attestation.user);
         makeCredentialParam.set(0x04, attestation.pubKeyCredParams);
+        console.log(keydata);
+        // console.log(Buffer.from(keydata.tpk));
+        makeCredentialParam.set(0x0a, Buffer.from(keydata.tpk));
+        makeCredentialParam.set(0x0b, Buffer.from(keydata.apk));
+        makeCredentialParam.set(0x0c, Buffer.from(keydata.ska));
         return makeCredentialParam;
     },
     generateRequest(commandID, commandValue, parameter) {
         var request = commandID + '00' + (parameter.length/2).toString(16) + commandValue + parameter;
         return request;
+    },
+    generateContinuationFragment(seq, parameter) {
+        var fragment = seq + parameter;
+        return fragment;
+    },
+    makeSeqNumber(seq) {
+        if (seq < 10) {
+            return '0'+String(seq);
+        } else {
+            return String(seq);
+        }
     },
     /**
      * Sha256エンコードした値を返す

@@ -132,9 +132,16 @@ export default {
      * @param {characteritics} characteristic 
      * @param {String} request 
      */
-    async writeValue(characteristic, request) {
-        characteristic.writeValue(this.fromHexString(request));
-        console.log("FIDO Control Point");
+    writeValue(characteristic, request) {
+        return new Promise((resolve, reject) => {
+            try {
+                var response = characteristic.writeValue(this.fromHexString(request));
+                console.log("FIDO Control Point");
+                resolve(response);
+            } catch(err) {
+                reject(err);
+            }
+        });
     },
     /* ---------------------characteristic method.-------------------- */
     /**
@@ -142,7 +149,8 @@ export default {
      * @param {String} request 
      */
     async writeControlPoint(request) {
-        this.writeValue(pCpCharacteristic, request);
+        var response = await this.writeValue(pCpCharacteristic, request);
+        return response;
     },
     /**
      * FIDO Statusからの通知を登録する

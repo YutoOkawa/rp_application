@@ -32,11 +32,15 @@ export default {
   data () {
       return {
           name: 'test',
-          attributes: ['IS', 'STUDENT'],
+          attributes: ['Aqours'],
           baseURL: 'localhost',
           request: '',
           response: '',
-          gotInfo: false
+          credentialId: '',
+          gotInfo: false,
+          maxsize: 255,
+          fragmentCount: 0,
+          fragment: ''
       }
   },
   methods: {
@@ -74,6 +78,13 @@ export default {
           console.log(this.response);
           this.gotInfo = true;
       },
+      /**
+       * attestationOptionsを実行する
+       * @param username 登録するユーザ名
+       * @param attributes 登録する属性
+       * @param baseURL FIDOサーバのURL
+       * @returns attestation
+       */
       async attestationOptions(username, attributes, baseURL) {
           var attestation = await webauthn.attestationOptions(username, attributes, baseURL);
           attestation = attestation.data;
@@ -85,6 +96,24 @@ export default {
           }
           return attestation;
       },
+      async attrgen(username, attributes, baseURL) {
+          var setupData = await webauthn.setupKgc(username, baseURL);
+          setupData = setupData.data;
+          this.credentialId = setupData.credentialId;
+          var keydata = await webauthn.attrgen(this.credentialId, attributes, baseURL);
+          return keydata;
+      },
+      async writePacket(packet) {
+        console.log(packet);
+        await this.writeControlPoint(packet);
+        return 1;
+      },
+      /**
+       * 登録を実行する
+       * @param username 登録するユーザ名
+       * @param attributes 登録する属性
+       * @param baseURL FIDOサーバのURL
+       */
       async register(username, attributes, baseURL) {
           var attestation = await this.attestationOptions(username, attributes, baseURL);
           console.log(attestation);
@@ -92,15 +121,38 @@ export default {
           console.log(clientDataJSON);
           var clientDataHash = webAuthUtil.generateClientDataHash(clientDataJSON);
           console.log(clientDataHash);
-          var makeCredentialParam = webAuthUtil.generateMakeCredentialParameter(attestation, clientDataHash);
+          var keydata = await this.attrgen(username, attributes, baseURL);
+          keydata = keydata.data;
+          var makeCredentialParam = webAuthUtil.generateMakeCredentialParameter(attestation, clientDataHash, keydata);
           console.log(makeCredentialParam);
           var parameter_cbor = CBOR.encodeCBOR(makeCredentialParam);
           console.log(parameter_cbor);
           var parameter_cborHex = webAuthUtil.convertHex(parameter_cbor);
           console.log(parameter_cborHex);
-          this.request = webAuthUtil.generateRequest('83', '01', parameter_cborHex);
-          console.log(this.request);
-          await this.writeControlPoint(this.request);
+          console.log(parameter_cbor.length/this.maxsize);
+          if (parameter_cbor.length > this.maxsize) { /* 分割パケットの場合 */
+            this.request = webAuthUtil.generateRequest('83', '01', parameter_cborHex.slice(0, this.maxsize*2));
+            console.log(this.request);
+            // await this.writePacket(this.request);
+            var first = await ble.writeControlPoint(this.request);
+            console.log(first);
+            /* 試しに1fragmentのみの送信 */
+            for(this.fragmentCount=0; this.fragmentCount+1<parameter_cborHex.length/(2*this.maxsize); this.fragmentCount++) {
+              if (this.fragmentCount+1>parameter_cborHex.length/(2*this.maxsize)) {
+                this.fragment = webAuthUtil.generateContinuationFragment(webAuthUtil.makeSeqNumber(this.fragmentCount), parameter_cborHex.slice(2*this.maxsize*(this.fragmentCount+1), parameter_cborHex.length));
+              } else {
+                this.fragment = webAuthUtil.generateContinuationFragment(webAuthUtil.makeSeqNumber(this.fragmentCount), parameter_cborHex.slice(2*this.maxsize*(this.fragmentCount+1), 2*this.maxsize*(this.fragmentCount+2)));
+              }
+              console.log(this.fragment);
+              // await this.writePacket(this.fragment);
+              var second = await ble.writeControlPoint(this.fragment);
+              console.log(second);
+            }
+          } else { /* 分割パケットを必要としない場合 */
+            this.request = webAuthUtil.generateRequest('83', '01', parameter_cborHex);
+            console.log(this.request);
+            await this.writeControlPoint(this.request);
+          }
         //   await this.writeControlPoint(request);
       }
   }
