@@ -33,6 +33,21 @@ export default {
         return Api(baseURL).post('/attestation/options', param);
     },
     /**
+     * assertionOptionsのリクエストを送信する
+     * @param {String} username 
+     * @param {String} policy 
+     * @param {String} FIDO_URL 
+     * @returns options
+     */
+    asserionOptions(username, policy, FIDO_URL) {
+        const baseURL = 'https://' + FIDO_URL + ':3000';
+        const param = {
+            username: username,
+            policy: policy
+        };
+        return Api(baseURL).post('/assertion/options', param);
+    },
+    /**
      * kgcのセットアップを行う
      * @param {string} userid ユーザID
      * @param {string} KGC_URL KGCのURL

@@ -52,6 +52,14 @@ export default {
         makeCredentialParam.set(0x0c, Buffer.from(keydata.ska));
         return makeCredentialParam;
     },
+    generateGetAssertionParameter(assertion, clientDataHash, policy) {
+        var getAssertionParam = new Map();
+        getAssertionParam.set(0x01, assertion.rp.id);
+        getAssertionParam.set(0x02, clientDataHash);
+        getAssertionParam.set(0x03, assertion.allowCredentials);
+        getAssertionParam.set(0x08, policy);
+        return getAssertionParam;
+    },
     generateRequest(commandID, commandValue, parameter) {
         var request = commandID + '00' + (parameter.length/2).toString(16) + commandValue + parameter;
         return request;
