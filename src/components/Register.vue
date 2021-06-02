@@ -24,6 +24,7 @@ import ble from '@/api/ble'
 import CBOR from '@/api/cbor'
 import webAuthUtil from '@/api/webauth_util'
 import webauthn from '@/api/webauthn'
+import utils from '@/api/utils'
 export default {
   name: 'Register',
   props: {
@@ -36,6 +37,7 @@ export default {
           baseURL: 'localhost',
           request: '',
           response: '',
+          encodeResponse: new Uint8Array(0),
           credentialId: '',
           gotInfo: false,
           maxsize: 255,
@@ -70,13 +72,16 @@ export default {
        * @param event 発火したイベント
        * @returns cborからデコードされた値
        */
-      onReceiveData(event) {
+      async onReceiveData(event) {
           this.gotInfo = false;
           var chara = event.target;
           var value = chara.value;
-          this.response = CBOR.decodeCBOR(value);
-          console.log(this.response);
-          this.gotInfo = true;
+          this.encodeResponse = await utils.concentenation(this.encodeResponse, value.buffer);
+          if (this.maxsize > value.byteLength) {
+            this.response = CBOR.decodeCBOR(this.encodeResponse);
+            this.gotInfo = true;
+            this.encodeResponse = new Uint8Array(0);
+          }
       },
       /**
        * attestationOptionsを実行する
