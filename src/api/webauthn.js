@@ -32,6 +32,14 @@ export default {
         }
         return Api(baseURL).post('/attestation/options', param);
     },
+    attestationResult(attestation, userid, FIDO_URL) {
+        const baseURL = 'https://' + FIDO_URL + ':3000';
+        const param = {
+            userid: userid,
+            attestation: attestation
+        };
+        return Api(baseURL).post('/attestation/result', param);
+    },
     /**
      * assertionOptionsのリクエストを送信する
      * @param {String} username 

@@ -35,6 +35,7 @@ export default {
           name: 'test',
           attributes: ['Aqours'],
           baseURL: 'localhost',
+          clientDataJSON: '',
           request: '',
           response: '',
           encodeResponse: new Uint8Array(0),
@@ -78,7 +79,8 @@ export default {
           var value = chara.value;
           this.encodeResponse = await utils.concentenation(this.encodeResponse, value.buffer);
           if (this.maxsize > value.byteLength) {
-            this.response = CBOR.decodeCBOR(this.encodeResponse);
+            // this.response = CBOR.decodeCBOR(this.encodeResponse);
+            this.atteRe(this.baseURL, this.clientDataJSON);
             this.gotInfo = true;
             this.encodeResponse = new Uint8Array(0);
           }
@@ -101,6 +103,11 @@ export default {
           }
           return attestation;
       },
+      async attestationResult(attestation, userid, baseURL) {
+          var response = await webauthn.attestationResult(attestation, userid, baseURL);
+          response = response.data;
+          console.log(response);
+      },
       async attrgen(username, attributes, baseURL) {
           var setupData = await webauthn.setupKgc(username, baseURL);
           setupData = setupData.data;
@@ -122,9 +129,9 @@ export default {
       async register(username, attributes, baseURL) {
           var attestation = await this.attestationOptions(username, attributes, baseURL);
           console.log(attestation);
-          var clientDataJSON = webAuthUtil.generateClientDataJSON(attestation.challenge, 'webauthn.get', 'localhost');
-          console.log(clientDataJSON);
-          var clientDataHash = webAuthUtil.generateClientDataHash(clientDataJSON);
+          this.clientDataJSON = webAuthUtil.generateClientDataJSON(attestation.challenge, 'webauthn.create', 'https://localhost:3000');
+          console.log(this.clientDataJSON);
+          var clientDataHash = webAuthUtil.generateClientDataHash(this.clientDataJSON);
           console.log(clientDataHash);
           var keydata = await this.attrgen(username, attributes, baseURL);
           keydata = keydata.data;
@@ -159,6 +166,23 @@ export default {
             await this.writeControlPoint(this.request);
           }
         //   await this.writeControlPoint(request);
+      },
+      async atteRe(baseURL, clientDataJSON) {
+          /* json -> buffer -> base64url */
+          clientDataJSON = JSON.stringify(clientDataJSON);
+          clientDataJSON = webAuthUtil.strToBuffer(clientDataJSON);
+          clientDataJSON = webAuthUtil.encodeBase64url(clientDataJSON);
+          /* CBOR -> base64url */
+          var attestationObject = webAuthUtil.encodeBase64url(this.encodeResponse);
+          /* attestationデータの作成 */
+          var attestation = {
+              response: {
+                  attestationObject: attestationObject,
+                  clientDataJSON: clientDataJSON
+              },
+              type: 'abs'
+          };
+          this.attestationResult(attestation, this.name, baseURL);
       }
   }
 }

@@ -165,4 +165,9 @@ export default {
         }
         return buf
     },
+    strToBuffer(src) {
+        return (new Uint8Array([].map.call(src,function(c) {
+            return c.charCodeAt(0)
+        }))).buffer;
+    }
 }
