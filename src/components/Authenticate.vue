@@ -30,6 +30,7 @@ export default {
           name: 'test',
           policy: 'Aqours OR AZALEA',
           baseURL: 'localhost',
+          clientDataJSON: '',
           request: '',
           response: '',
           encodeResponse: new Uint8Array(0),
@@ -73,7 +74,8 @@ export default {
           var value = chara.value;
           this.encodeResponse = await utils.concentenation(this.encodeResponse, value.buffer);
           if (this.maxsize > value.byteLength) {
-            this.response = CBOR.decodeCBOR(this.encodeResponse);
+            // this.response = CBOR.decodeCBOR(this.encodeResponse);
+            this.asserRe(this.baseURL, this.clientDataJSON);
             this.gotInfo = true;
             this.encodeResponse = new Uint8Array(0);
           } else {
@@ -97,6 +99,11 @@ export default {
           }
           return assertion;
       },
+      async assertionResult(assertion, userid, baseURL) {
+          var response = await webauthn.assertionResult(assertion, userid, baseURL);
+          response = response.data;
+          console.log(response);
+      },
       async writePacket(packet) {
         console.log(packet);
         await this.writeControlPoint(packet);
@@ -109,12 +116,11 @@ export default {
        * @param baseURL FIDOサーバのURL
        */
       async authenticate(username, policy, baseURL) {
-          console.log('a');
           var assertion = await this.assertionOptions(username, policy, baseURL);
           console.log(assertion);
-          var clientDataJSON = webAuthUtil.generateClientDataJSON(assertion.challenge, 'webauthn.get', 'localhost');
-          console.log(clientDataJSON);
-          var clientDataHash = webAuthUtil.generateClientDataHash(clientDataJSON);
+          this.clientDataJSON = webAuthUtil.generateClientDataJSON(assertion.challenge, 'webauthn.get', 'localhost');
+          console.log(this.clientDataJSON);
+          var clientDataHash = webAuthUtil.generateClientDataHash(this.clientDataJSON);
           console.log(clientDataHash);
           /* TODO;GetAssertionの作成 */
           var getAssertionParam = webAuthUtil.generateGetAssertionParameter(assertion, clientDataHash, policy);
@@ -148,6 +154,22 @@ export default {
             await this.writeControlPoint(this.request);
           }
         //   await this.writeControlPoint(request);
+      },
+      async asserRe(baseURL, clientDataJSON) {
+          /* json -> buffer -> base64url */
+          clientDataJSON = JSON.stringify(clientDataJSON);
+          clientDataJSON = webAuthUtil.strToBuffer(clientDataJSON);
+          clientDataJSON = webAuthUtil.encodeBase64url(clientDataJSON);
+          /* CBOR -> base64url */
+          var authData = webAuthUtil.encodeBase64url(this.encodeResponse);
+          var assertion = {
+              response: {
+                  authenticatorData: authData,
+                  clientDataJSON: clientDataJSON
+              },
+              type: 'abs'
+          }
+          this.assertionResult(assertion, this.name, baseURL);
       }
   }
 }

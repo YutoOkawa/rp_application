@@ -175,6 +175,8 @@ export default {
           /* CBOR -> base64url */
           var attestationObject = webAuthUtil.encodeBase64url(this.encodeResponse);
           /* attestationデータの作成 */
+          /* TODO:idを取り出す */
+          /* attestationObject.authData.attestedCredentialData.credentialIdを取り出す */
           var attestation = {
               response: {
                   attestationObject: attestationObject,

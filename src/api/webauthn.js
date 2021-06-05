@@ -55,6 +55,14 @@ export default {
         };
         return Api(baseURL).post('/assertion/options', param);
     },
+    assertionResult(assertion, userid, FIDO_URL) {
+        const baseURL = 'https://' + FIDO_URL + ':3000';
+        const param = {
+            userid: userid, 
+            assertion: assertion
+        };
+        return Api(baseURL).post('/assertion/result', param);
+    },
     /**
      * kgcのセットアップを行う
      * @param {string} userid ユーザID
