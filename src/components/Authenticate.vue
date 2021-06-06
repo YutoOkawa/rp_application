@@ -78,8 +78,6 @@ export default {
             this.asserRe(this.baseURL, this.clientDataJSON);
             this.gotInfo = true;
             this.encodeResponse = new Uint8Array(0);
-          } else {
-            console.log(this.encodeResponse);
           }
       },
       /**
@@ -104,11 +102,6 @@ export default {
           response = response.data;
           console.log(response);
       },
-      async writePacket(packet) {
-        console.log(packet);
-        await this.writeControlPoint(packet);
-        return 1;
-      },
       /**
        * 認証を実行する
        * @param username 登録するユーザ名
@@ -117,25 +110,15 @@ export default {
        */
       async authenticate(username, policy, baseURL) {
           var assertion = await this.assertionOptions(username, policy, baseURL);
-          console.log(assertion);
-          this.clientDataJSON = webAuthUtil.generateClientDataJSON(assertion.challenge, 'webauthn.get', 'localhost');
-          console.log(this.clientDataJSON);
+          this.clientDataJSON = webAuthUtil.generateClientDataJSON(assertion.challenge, 'webauthn.get', 'https://localhost:3000');
           var clientDataHash = webAuthUtil.generateClientDataHash(this.clientDataJSON);
-          console.log(clientDataHash);
           /* TODO;GetAssertionの作成 */
           var getAssertionParam = webAuthUtil.generateGetAssertionParameter(assertion, clientDataHash, policy);
-          console.log(getAssertionParam);
           var parameter_cbor = CBOR.encodeCBOR(getAssertionParam);
-          console.log(parameter_cbor);
           var parameter_cborHex = webAuthUtil.convertHex(parameter_cbor);
-          console.log(parameter_cborHex);
-          console.log(parameter_cbor.length/this.maxsize);
           if (parameter_cbor.length > this.maxsize) { /* 分割パケットの場合 */
             this.request = webAuthUtil.generateRequest('83', '02', parameter_cborHex.slice(0, this.maxsize*2));
-            console.log(this.request);
-            // await this.writePacket(this.request);
-            var first = await ble.writeControlPoint(this.request);
-            console.log(first);
+            await ble.writeControlPoint(this.request);
             /* 試しに1fragmentのみの送信 */
             for(this.fragmentCount=0; this.fragmentCount+1<parameter_cborHex.length/(2*this.maxsize); this.fragmentCount++) {
               if (this.fragmentCount+1>parameter_cborHex.length/(2*this.maxsize)) {
@@ -143,17 +126,12 @@ export default {
               } else {
                 this.fragment = webAuthUtil.generateContinuationFragment(webAuthUtil.makeSeqNumber(this.fragmentCount), parameter_cborHex.slice(2*this.maxsize*(this.fragmentCount+1), 2*this.maxsize*(this.fragmentCount+2)));
               }
-              console.log(this.fragment);
-              // await this.writePacket(this.fragment);
-              var second = await ble.writeControlPoint(this.fragment);
-              console.log(second);
+              await ble.writeControlPoint(this.fragment);
             }
           } else { /* 分割パケットを必要としない場合 */
             this.request = webAuthUtil.generateRequest('83', '02', parameter_cborHex);
-            console.log(this.request);
             await this.writeControlPoint(this.request);
           }
-        //   await this.writeControlPoint(request);
       },
       async asserRe(baseURL, clientDataJSON) {
           /* json -> buffer -> base64url */
@@ -161,11 +139,18 @@ export default {
           clientDataJSON = webAuthUtil.strToBuffer(clientDataJSON);
           clientDataJSON = webAuthUtil.encodeBase64url(clientDataJSON);
           /* CBOR -> base64url */
-          var authData = webAuthUtil.encodeBase64url(this.encodeResponse);
+          /* TODO:一度デコードして値を取り出す！ */
+          var response = CBOR.decodeCBOR(this.encodeResponse);
+          var authData = new Map();
+          authData.set(0x02, response.get(2));
+          authData = CBOR.encodeCBOR(authData);
+          authData = webAuthUtil.encodeBase64url(authData);
+          var signature = webAuthUtil.encodeBase64url(response.get(3));
           var assertion = {
               response: {
                   authenticatorData: authData,
-                  clientDataJSON: clientDataJSON
+                  clientDataJSON: clientDataJSON,
+                  signature: signature
               },
               type: 'abs'
           }

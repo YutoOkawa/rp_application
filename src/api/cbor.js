@@ -8,7 +8,6 @@ export default {
      */
     encodeCBOR(value) {
         var encodeObject = cbor.encode(value);
-        console.log(encodeObject);
         return encodeObject;
     },
     /**
@@ -16,9 +15,7 @@ export default {
      * @param {*} encoded_cbor CBOREncodeされた値 
      */
     decodeCBOR(encoded_cbor) {
-        console.log(encoded_cbor);
         var decodeObject = cbor.decode(encoded_cbor);
-        console.log(decodeObject);
         return decodeObject;
     }
 }

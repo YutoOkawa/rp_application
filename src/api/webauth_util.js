@@ -45,8 +45,6 @@ export default {
         makeCredentialParam.set(0x02, attestation.rp);
         makeCredentialParam.set(0x03, attestation.user);
         makeCredentialParam.set(0x04, attestation.pubKeyCredParams);
-        console.log(keydata);
-        // console.log(Buffer.from(keydata.tpk));
         makeCredentialParam.set(0x0a, Buffer.from(keydata.tpk));
         makeCredentialParam.set(0x0b, Buffer.from(keydata.apk));
         makeCredentialParam.set(0x0c, Buffer.from(keydata.ska));
@@ -144,19 +142,16 @@ export default {
     toArrayBuffer (buf) {
         if (typeof buf === 'string') {
             // base64url to base64
-            // console.log("base64url to base64")
             buf = buf.replace(/-/g, '+').replace(/_/g, '/')
             // base64 to Buffer
             buf = Buffer.from(buf, 'base64')
         }
         // Buffer or Array to Uint8Array
         if (buf instanceof Buffer || Array.isArray(buf)) {
-            // console.log("Buffer or Array to Uint8Array")
             buf = new Uint8Array(buf)
         }
         // Uint8Array to ArrayBuffer
         if (buf instanceof Uint8Array) {
-            // console.log("Uint8Array to ArrayBuffer")
             buf = buf.buffer
         }
         // error if none of the above worked
