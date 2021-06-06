@@ -30,7 +30,7 @@ export default {
     generateClientDataHash(clientDataJSON) {
         var clientDataHash = JSON.stringify(clientDataJSON);
         clientDataHash = strToBuffer(clientDataHash);
-        clientDataHash = this.generateSha256(clientDataHash);
+        clientDataHash = this.generateSha256(Buffer.from(clientDataHash));
         return clientDataHash
     },
     /**
