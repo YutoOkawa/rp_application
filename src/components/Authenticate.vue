@@ -145,7 +145,18 @@ export default {
           authData.set(0x02, response.get(2));
           authData = CBOR.encodeCBOR(authData);
           authData = webAuthUtil.encodeBase64url(authData);
-          var signature = webAuthUtil.encodeBase64url(response.get(3));
+          var signature = response.get(3);
+          var signature_map = new Map();
+          signature_map.set("Y", webAuthUtil.encodeBase64url(signature["Y"]));
+          signature_map.set("W", webAuthUtil.encodeBase64url(signature["W"]));
+          for (var i=0; i<4; i++) {
+            signature_map.set("S"+String(i+1), webAuthUtil.encodeBase64url(signature["S"+String(i+1)]));
+          }
+          for (var j=0; j<1; j++) {
+            signature_map.set("P"+String(j+1), webAuthUtil.encodeBase64url(signature["P"+String(j+1)]));
+          }
+          signature = CBOR.encodeCBOR(signature_map);
+          signature = webAuthUtil.encodeBase64url(signature);
           var assertion = {
               response: {
                   authenticatorData: authData,
