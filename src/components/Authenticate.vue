@@ -28,7 +28,7 @@ export default {
   data () {
       return {
           name: 'test',
-          policy: 'Aqours OR AZALEA',
+          policy: 'AZALEA OR Aqours ',
           baseURL: 'localhost',
           clientDataJSON: '',
           request: '',
