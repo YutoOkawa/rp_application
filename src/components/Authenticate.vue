@@ -30,7 +30,6 @@ export default {
           name: 'test',
           policy: 'AZALEA OR Aqours ',
           baseURL: 'localhost',
-          clientDataJSON: '',
           request: '',
           response: '',
           encodeResponse: new Uint8Array(0),
@@ -38,7 +37,9 @@ export default {
           gotInfo: false,
           maxsize: 255,
           fragmentCount: 0,
-          fragment: ''
+          fragment: '',
+          startTime: 0,
+          endTime: 0
       }
   },
   methods: {
@@ -99,6 +100,8 @@ export default {
       },
       async assertionResult(assertion, userid, baseURL) {
           var response = await webauthn.assertionResult(assertion, userid, baseURL);
+          this.endTime = performance.now();
+          console.log(this.endTime - this.startTime);
           response = response.data;
           console.log(response);
       },
@@ -109,6 +112,7 @@ export default {
        * @param baseURL FIDOサーバのURL
        */
       async authenticate(username, policy, baseURL) {
+          this.startTime = performance.now();
           var assertion = await this.assertionOptions(username, policy, baseURL);
           this.clientDataJSON = webAuthUtil.generateClientDataJSON(assertion.challenge, 'webauthn.get', 'https://localhost:3000');
           var clientDataHash = webAuthUtil.generateClientDataHash(this.clientDataJSON);
@@ -149,7 +153,8 @@ export default {
           var signature_map = new Map();
           signature_map.set("Y", webAuthUtil.encodeBase64url(signature["Y"]));
           signature_map.set("W", webAuthUtil.encodeBase64url(signature["W"]));
-          for (var i=0; i<4; i++) {
+          // for (var i=0; i<4; i++) {
+          for (var i=0; i<3; i++) {
             signature_map.set("S"+String(i+1), webAuthUtil.encodeBase64url(signature["S"+String(i+1)]));
           }
           for (var j=0; j<1; j++) {

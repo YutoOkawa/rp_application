@@ -33,7 +33,7 @@ export default {
   data () {
       return {
           name: 'test',
-          attributes: ['Aqours'],
+          attributes: ['GUARDIANSHIP'],
           baseURL: 'localhost',
           clientDataJSON: '',
           request: '',
@@ -43,7 +43,9 @@ export default {
           gotInfo: false,
           maxsize: 255,
           fragmentCount: 0,
-          fragment: ''
+          fragment: '',
+          startTime: 0,
+          endTime: 0
       }
   },
   methods: {
@@ -104,6 +106,8 @@ export default {
       },
       async attestationResult(attestation, userid, baseURL) {
           var response = await webauthn.attestationResult(attestation, userid, baseURL);
+          this.endTime = performance.now();
+          console.log(this.endTime - this.startTime);
           response = response.data;
           console.log(response);
       },
@@ -121,6 +125,7 @@ export default {
        * @param baseURL FIDOサーバのURL
        */
       async register(username, attributes, baseURL) {
+          this.startTime = performance.now();
           var attestation = await this.attestationOptions(username, attributes, baseURL);
           this.clientDataJSON = webAuthUtil.generateClientDataJSON(attestation.challenge, 'webauthn.create', 'https://localhost:3000');
           var clientDataHash = webAuthUtil.generateClientDataHash(this.clientDataJSON);
