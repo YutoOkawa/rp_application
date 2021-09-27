@@ -29,6 +29,11 @@ const routes = [
     path: '/auth',
     name: 'Authenticate',
     component: () => import('../views/AuthenticatePage.vue')
+  },
+  {
+    path: '/delegated',
+    name: 'DelegatedRegister',
+    component: () => import('../views/DelegatedRegisterPage')
   }
 ]
 

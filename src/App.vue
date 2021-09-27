@@ -4,7 +4,8 @@
     <router-link to="/about">About</router-link> |
     <router-link to="/getinfo">GetInfo</router-link> |
     <router-link to="/register">Register</router-link> |
-    <router-link to="/auth">Authenticate</router-link>
+    <router-link to="/auth">Authenticate</router-link> |
+    <router-link to="/delegated">Delegated Register</router-link>
   </div>
   <router-view/>
 </template>
