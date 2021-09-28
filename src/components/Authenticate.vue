@@ -153,8 +153,7 @@ export default {
           var signature_map = new Map();
           signature_map.set("Y", webAuthUtil.encodeBase64url(signature["Y"]));
           signature_map.set("W", webAuthUtil.encodeBase64url(signature["W"]));
-          // for (var i=0; i<4; i++) {
-          for (var i=0; i<3; i++) {
+          for (var i=0; i<4; i++) {
             signature_map.set("S"+String(i+1), webAuthUtil.encodeBase64url(signature["S"+String(i+1)]));
           }
           for (var j=0; j<1; j++) {
