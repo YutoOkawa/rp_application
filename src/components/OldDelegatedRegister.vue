@@ -1,5 +1,5 @@
 <template>
-  <div class="DelegatedRegister">
+  <div class="Delegatedregister">
     <h1>{{ msg }}</h1>
     <div class="connect">
         <button @click="connect()">接続</button>
@@ -9,9 +9,9 @@
         <input v-model="name">
     </div>
     <div class="controlpoint">
-        <button @click="register(name, attributes, baseURL)">ControlPoint</button>
+        <button @click="authenticate(name, policy, baseURL)">DelegatedRegister</button>
     </div>
-    <div class="getinfo_response" v-if="gotInfo">
+    <div class="getinfo_response" v-if="authcheck">
         <div v-for="[key, val] in Array.from(response)" :key="key">
           {{key}}:{{val}}
         </div>
@@ -34,13 +34,14 @@ export default {
       return {
           name: 'test',
           attributes: ['GUARDIANSHIP'],
+          policy: 'USER',
           baseURL: 'localhost',
           clientDataJSON: '',
           request: '',
           response: '',
           encodeResponse: new Uint8Array(0),
           credentialId: '',
-          gotInfo: false,
+          authcheck: false,
           maxsize: 255,
           fragmentCount: 0,
           fragment: '',
@@ -74,16 +75,49 @@ export default {
       /**
        * @param event 発火したイベント
        * @returns cborからデコードされた値
+       * 認証レスポンス受け取り→登録レスポンス受け取りへ変化させる，Bool値などで？
        */
       async onReceiveData(event) {
-          this.gotInfo = false;
+          // this.gotInfo = false;
           var chara = event.target;
           var value = chara.value;
           this.encodeResponse = await utils.concentenation(this.encodeResponse, value.buffer);
-          if (this.maxsize > value.byteLength) {
-            this.atteRe(this.baseURL, this.clientDataJSON);
-            this.gotInfo = true;
+          if (this.maxsize > value.byteLength && this.authcheck == false) { /* 利用者本人の認証レスポンス */
+            this.asserRe(this.baseURL, this.clientDataJSON);
+            this.authcheck = true;
             this.encodeResponse = new Uint8Array(0);
+          } else if (this.maxsize > value.byteLength && this.authcheck == true) { /* 代理人の登録レスポンス */
+            this.atteRe(this.baseURL, this.clientDataJSON);
+            this.authcheck = false;
+            this.encodeResponse = new Uint8Array(0);
+          }
+      },
+      /**
+       * assertionOptionsを実行する
+       * @param username 登録するユーザ名
+       * @param policy 属性条件
+       * @param baseURL FIDOサーバのURL
+       * @returns assertion
+       */
+      async assertionOptions(username, policy, baseURL) {
+          var assertion = await webauthn.asserionOptions(username, policy, baseURL);
+          assertion = assertion.data;
+          if (assertion.status == 'failed') {
+              alert(assertion.errorMessage);
+          } else {
+              assertion.challenge = webAuthUtil.toArrayBuffer(assertion.challenge);
+          }
+          return assertion;
+      },
+      async assertionResult(assertion, userid, baseURL) { /* 利用者の認証要求を受け取る */
+          var response = await webauthn.assertionResult(assertion, userid, baseURL);
+          response = response.data;
+          console.log(response);
+          if (response.status == 'ok') {
+            await ble.disconnect();
+            await ble.connect();
+            await ble.startStatus(this.onReceiveData);
+            this.register(this.name, this.attributes, this.baseURL);
           }
       },
       /**
@@ -119,13 +153,76 @@ export default {
           return keydata;
       },
       /**
+       * 認証を実行する
+       * @param username 登録するユーザ名
+       * @param policy 属性条件
+       * @param baseURL FIDOサーバのURL
+       */
+      async authenticate(username, policy, baseURL) {
+          this.startTime = performance.now();
+          var assertion = await this.assertionOptions(username, policy, baseURL);
+          this.clientDataJSON = webAuthUtil.generateClientDataJSON(assertion.challenge, 'webauthn.get', 'https://localhost:3000');
+          var clientDataHash = webAuthUtil.generateClientDataHash(this.clientDataJSON);
+          var getAssertionParam = webAuthUtil.generateGetAssertionParameter(assertion, clientDataHash, policy);
+          var parameter_cbor = CBOR.encodeCBOR(getAssertionParam);
+          var parameter_cborHex = webAuthUtil.convertHex(parameter_cbor);
+          if (parameter_cbor.length > this.maxsize) { /* 分割パケットの場合 */
+            this.request = webAuthUtil.generateRequest('83', '02', parameter_cborHex.slice(0, this.maxsize*2));
+            await ble.writeControlPoint(this.request);
+            for(this.fragmentCount=0; this.fragmentCount+1<parameter_cborHex.length/(2*this.maxsize); this.fragmentCount++) {
+              if (this.fragmentCount+1>parameter_cborHex.length/(2*this.maxsize)) {
+                this.fragment = webAuthUtil.generateContinuationFragment(webAuthUtil.makeSeqNumber(this.fragmentCount), parameter_cborHex.slice(2*this.maxsize*(this.fragmentCount+1), parameter_cborHex.length));
+              } else {
+                this.fragment = webAuthUtil.generateContinuationFragment(webAuthUtil.makeSeqNumber(this.fragmentCount), parameter_cborHex.slice(2*this.maxsize*(this.fragmentCount+1), 2*this.maxsize*(this.fragmentCount+2)));
+              }
+              await ble.writeControlPoint(this.fragment);
+            }
+          } else { /* 分割パケットを必要としない場合 */
+            this.request = webAuthUtil.generateRequest('83', '02', parameter_cborHex);
+            await this.writeControlPoint(this.request);
+          }
+      },
+      async asserRe(baseURL, clientDataJSON) {
+          /* json -> buffer -> base64url */
+          clientDataJSON = JSON.stringify(clientDataJSON);
+          clientDataJSON = webAuthUtil.strToBuffer(clientDataJSON);
+          clientDataJSON = webAuthUtil.encodeBase64url(clientDataJSON);
+          /* CBOR -> base64url */
+          /* TODO:一度デコードして値を取り出す！ */
+          var response = CBOR.decodeCBOR(this.encodeResponse);
+          var authData = new Map();
+          authData.set(0x02, response.get(2));
+          authData = CBOR.encodeCBOR(authData);
+          authData = webAuthUtil.encodeBase64url(authData);
+          var signature = response.get(3);
+          var signature_map = new Map();
+          signature_map.set("Y", webAuthUtil.encodeBase64url(signature["Y"]));
+          signature_map.set("W", webAuthUtil.encodeBase64url(signature["W"]));
+          for (var i=0; i<4; i++) {
+            signature_map.set("S"+String(i+1), webAuthUtil.encodeBase64url(signature["S"+String(i+1)]));
+          }
+          for (var j=0; j<1; j++) {
+            signature_map.set("P"+String(j+1), webAuthUtil.encodeBase64url(signature["P"+String(j+1)]));
+          }
+          signature = CBOR.encodeCBOR(signature_map);
+          signature = webAuthUtil.encodeBase64url(signature);
+          var assertion = {
+              response: {
+                  authenticatorData: authData,
+                  clientDataJSON: clientDataJSON,
+                  signature: signature
+              },
+              type: 'abs'
+          }
+          this.assertionResult(assertion, this.name, baseURL);
+      },
+      /**
        * 登録を実行する
        * @param username 登録するユーザ名
        * @param attributes 登録する属性
        * @param baseURL FIDOサーバのURL
        */
       async register(username, attributes, baseURL) {
-          this.startTime = performance.now();
           var attestation = await this.attestationOptions(username, attributes, baseURL);
           this.clientDataJSON = webAuthUtil.generateClientDataJSON(attestation.challenge, 'webauthn.create', 'https://localhost:3000');
           var clientDataHash = webAuthUtil.generateClientDataHash(this.clientDataJSON);

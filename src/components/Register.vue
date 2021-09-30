@@ -33,7 +33,7 @@ export default {
   data () {
       return {
           name: 'test',
-          attributes: ['GUARDIANSHIP'],
+          attributes: ['USER'],
           baseURL: 'localhost',
           clientDataJSON: '',
           request: '',

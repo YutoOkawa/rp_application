@@ -31,9 +31,9 @@ const routes = [
     component: () => import('../views/AuthenticatePage.vue')
   },
   {
-    path: '/delegated',
-    name: 'DelegatedRegister',
-    component: () => import('../views/DelegatedRegisterPage')
+    path: '/old',
+    name: 'OldDelegatedRegister',
+    component: () => import('../views/OldDelegatedRegisterPage')
   }
 ]
 
