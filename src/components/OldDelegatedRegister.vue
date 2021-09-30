@@ -1,5 +1,5 @@
 <template>
-  <div class="Delegatedregister">
+  <div class="OldDelegatedregister">
     <h1>{{ msg }}</h1>
     <div class="connect">
         <button @click="connect()">接続</button>
@@ -9,7 +9,7 @@
         <input v-model="name">
     </div>
     <div class="controlpoint">
-        <button @click="authenticate(name, policy, baseURL)">DelegatedRegister</button>
+        <button @click="authenticate(name, policy, baseURL)">OldDelegatedRegister</button>
     </div>
     <div class="getinfo_response" v-if="authcheck">
         <div v-for="[key, val] in Array.from(response)" :key="key">
@@ -26,7 +26,7 @@ import webAuthUtil from '@/api/webauth_util'
 import webauthn from '@/api/webauthn'
 import utils from '@/api/utils'
 export default {
-  name: 'DelegatedRegister',
+  name: 'OldDelegatedRegister',
   props: {
     msg: String
   },

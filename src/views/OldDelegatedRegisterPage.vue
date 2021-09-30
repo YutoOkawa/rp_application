@@ -1,5 +1,5 @@
 <template>
-  <div class="DelegatedRegister">
+  <div class="OldDelegatedRegister">
     <OldDelegatedRegister msg="Delegated Register Page."/>
   </div>
 </template>
