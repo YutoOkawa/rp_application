@@ -7,6 +7,8 @@
     </div>
     <div class="user">
         <input v-model="name">
+        <br>
+        <input v-model="policy">
     </div>
     <div class="controlpoint">
         <button @click="authenticate(name, policy, baseURL)">ControlPoint</button>
@@ -28,7 +30,7 @@ export default {
   data () {
       return {
           name: 'test',
-          policy: 'AZALEA OR Aqours ',
+          policy: 'USER | PARENTS',
           baseURL: 'localhost',
           request: '',
           response: '',
