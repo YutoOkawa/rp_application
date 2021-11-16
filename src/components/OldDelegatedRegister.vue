@@ -8,6 +8,16 @@
     <div class="user">
         <input v-model="name">
     </div>
+    <div class="attribute_list">
+      <input type="checkbox" id="user" value="USER" v-model="attributes">
+      <label for="USER">USER</label>
+      <input type="checkbox" id="parents" value="PARENTS" v-model="attributes">
+      <label for="PARENTS">PARENTS</label>
+      <input type="checkbox" id="guardianship" value="GUARDIANSHIP" v-model="attributes">
+      <label for="GUARDIANSHIP">GUARDIANSHIP</label>
+      <br>
+      <span>{{ attributes }}</span>
+    </div>
     <div class="controlpoint">
         <button @click="authenticate(name, policy, baseURL)">OldDelegatedRegister</button>
     </div>
@@ -33,7 +43,7 @@ export default {
   data () {
       return {
           name: 'test',
-          attributes: ['GUARDIANSHIP'],
+          attributes: [],
           policy: 'USER',
           baseURL: 'localhost',
           clientDataJSON: '',
