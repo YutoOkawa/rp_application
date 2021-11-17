@@ -34,6 +34,11 @@ const routes = [
     path: '/old',
     name: 'OldDelegatedRegister',
     component: () => import('../views/OldDelegatedRegisterPage')
+  },
+  {
+    path: '/delegated',
+    name: 'DelegatedResgister',
+    component: () => import('../views/DelegatedRegisterPage')
   }
 ]
 

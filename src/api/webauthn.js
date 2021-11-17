@@ -63,6 +63,25 @@ export default {
         };
         return Api(baseURL).post('/assertion/result', param);
     },
+    delegatedOptions(username, delegatedUsername, attributes, policy, FIDO_URL) {
+        const baseURL = 'https://' + FIDO_URL + ':3000';
+        const param = {
+            username: username,
+            delegatedUsername: delegatedUsername,
+            attributes: combine_attributes(attributes),
+            policy: policy
+        };
+        return Api(baseURL).post('/delegated/options', param);
+    },
+    delegatedResult(attestation, username, delegatedUsername, FIDO_URL) {
+        const baseURL = 'https://' + FIDO_URL + ':3000';
+        const param = {
+            attestation: attestation,
+            username: username,
+            delegatedUsername: delegatedUsername,
+        };
+        return Api(baseURL).post('/delegated/result', param);
+    },
     /**
      * kgcのセットアップを行う
      * @param {string} userid ユーザID
@@ -74,6 +93,7 @@ export default {
         const param = {
             userid: userid
         };
+        console.log(param);
         return Api(baseURL).post('/setup', param);
     },
     /**
