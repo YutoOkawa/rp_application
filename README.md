@@ -1,5 +1,8 @@
 # rp_application
 
+## Environment
+WebBLE APIを利用する関係上、Google Chromeを利用してください。
+
 ## Project setup
 ```
 npm install
