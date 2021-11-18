@@ -9,16 +9,21 @@ npm install
 ```
 npm run serve
 ```
+## Caution
+### CertErrorについて
+FIDOServerに対してhttps通信をしますが、オレオレ証明書のためCertErrorが出ます。
 
-### Compiles and minifies for production
+証明書が信頼できないとアクセスができませんが、一度GoogleChromeで
+```bash
+https://localhost:3000
 ```
-npm run build
+にアクセスしていただいて、画面上で
+```bash
+this is unsafe
 ```
+と打つとアクセスできるようになります。
 
-### Lints and fixes files
-```
-npm run lint
-```
+ローカル上で動かすための暫定処理になります。
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+(FIDOはhttps通信が必須とされているためその部分に準拠しています。)
+
