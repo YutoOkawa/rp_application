@@ -1,6 +1,14 @@
 <template>
   <div class="register">
     <h1>{{ msg }}</h1>
+    <div class="selection">
+      <input type="radio" id="ble" value="BLE" v-model="platforms">
+      <label for="BLE">BLE</label>
+      <input type="radio" id="hid" value="HID" v-model="platforms">
+      <label for="HID">HID</label>
+      <br>
+      <span>Picked: {{ platforms }}</span>
+    </div>
     <div class="connect">
         <button @click="connect()">connect</button>
         <button @click="disconnect()">disconnect</button>
@@ -31,6 +39,7 @@
 
 <script>
 import ble from '@/api/ble'
+import hid from '@/api/hid'
 import CBOR from '@/api/cbor'
 import webAuthUtil from '@/api/webauth_util'
 import webauthn from '@/api/webauthn'
@@ -44,6 +53,7 @@ export default {
       return {
           name: 'test',
           attributes: [],
+          platforms: '',
           baseURL: 'localhost',
           clientDataJSON: '',
           request: '',
@@ -63,9 +73,17 @@ export default {
        * BLE機器を接続してNotifyを登録する
        */
       async connect() {
-          await ble.connect();
-          console.log("BLE connect!");
-          await ble.startStatus(this.onReceiveData);
+          if (this.platforms == "BLE") {
+              await ble.connect();
+              console.log("BLE connect!");
+              await ble.startStatus(this.onReceiveData);
+          } else if (this.platforms == "HID") {
+              await hid.connect();
+              console.log("HID connect!");
+              ble.setInputReport(this.onReceiveData);
+          } else {
+              // 処理をしないようにする
+          }
       },
       /**
        * BLE機器のNotifyを削除して接続解除する
