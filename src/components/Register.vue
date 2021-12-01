@@ -82,7 +82,7 @@ export default {
               console.log("HID connect!");
               ble.setInputReport(this.onReceiveData);
           } else {
-              // 処理をしないようにする
+              alert("select device type: BLE or HID.");
           }
       },
       /**
