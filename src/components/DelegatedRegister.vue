@@ -2,8 +2,8 @@
   <div class="Delegatedregister">
     <h1>{{ msg }}</h1>
     <div class="connect">
-        <button @click="connect()">接続</button>
-        <button @click="disconnect()">切断</button>
+        <button @click="connect()">connect</button>
+        <button @click="disconnect()">disconnect</button>
     </div>
     <div class="user">
         username<br>
@@ -46,7 +46,7 @@ export default {
   data () {
       return {
           name: 'test',
-          delegatedName: 'parents',
+          delegatedName: 'agents',
           attributes: [],
           policy: 'USER',
           baseURL: 'localhost',

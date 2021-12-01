@@ -2,8 +2,8 @@
   <div class="authenticate">
     <h1>{{ msg }}</h1>
     <div class="connect">
-        <button @click="connect()">接続</button>
-        <button @click="disconnect()">切断</button>
+        <button @click="connect()">connect</button>
+        <button @click="disconnect()">disconnect</button>
     </div>
     <div class="user">
         <input v-model="name">
@@ -30,7 +30,7 @@ export default {
   data () {
       return {
           name: 'test',
-          policy: 'USER | PARENTS',
+          policy: 'USER',
           baseURL: 'localhost',
           request: '',
           response: '',

@@ -2,8 +2,8 @@
   <div class="register">
     <h1>{{ msg }}</h1>
     <div class="connect">
-        <button @click="connect()">接続</button>
-        <button @click="disconnect()">切断</button>
+        <button @click="connect()">connect</button>
+        <button @click="disconnect()">disconnect</button>
     </div>
     <div class="user">
         <input v-model="name">
