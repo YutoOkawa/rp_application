@@ -47,9 +47,73 @@ export default {
     },
     /**
      * HID DeviceにReportを送信する
-     * @param {String} report 
+     * @param {ArrayBuffer} report 
      */
     async sendReport(report) {
+        console.log(device);
         await device.sendReport(outputReportId, report);
+    },
+    /* -------------------HID Util Method.------------------- */
+    /**
+     * 認証器からのResponseとfragmentを繋ぎ合わせる
+     * @param {ArrayBuffer} f_segment 
+     * @param {ArrayBuffer} b_segment 
+     * @param {int} maxsize
+     */
+    concentenation(f_segment, b_segment, maxsize) {
+        // 連結後配列サイズの計算
+        var sumLength = 0;
+        sumLength += f_segment.byteLength;
+        b_segment = b_segment.slice(5);
+        if (sumLength + b_segment.byteLength > maxsize) { // パケットの最大サイズを超えた場合
+            let huyou = sumLength + b_segment.byteLength - maxsize;
+            b_segment = b_segment.slice(0, -1*huyou);
+            sumLength = maxsize;
+        }
+        // 連結配列の作成
+        var whole = new Uint8Array(sumLength);
+        var pos = 0;
+        whole.set(new Uint8Array(f_segment), pos);
+        pos += f_segment.byteLength;
+        whole.set(new Uint8Array(b_segment), pos);
+        return whole;
+    },
+    /**
+     * HIDに対応したRequestデータを生成する
+     * @param {ArrayBuffer} channelID 
+     * @param {ArrayBuffer} cmd_hid
+     * @param {ArrayBuffer} cmd_authapi
+     * @param {ArrayBuffer} parameter
+     * @returns ArrayBuffer
+     */
+    generateRequest(channelID, cmd_hid, cmd_authapi, parameter) {
+        var pos = 0;
+        var request = new Uint8Array(64);
+        // channelID
+        request.set(new Uint8Array(channelID), pos);
+        pos += channelID.byteLength;
+        // CMD_HID
+        request.set(new Uint8Array(cmd_hid), pos);
+        pos += cmd_hid.byteLength;
+        // BCNTH
+        var bcnth = new ArrayBuffer(1);
+        var bcnth_buf = new Uint8Array(bcnth);
+        bcnth_buf[0] = 0x00;
+        request.set(new Uint8Array(bcnth), pos);
+        pos += bcnth.byteLength;
+        // BCNTL
+        var bcntl = new ArrayBuffer(2);
+        var bcntl_buf = new Uint8Array(bcntl);
+        bcntl_buf[0] = 0x00;
+        bcntl_buf[1] = 0x59; // TODO:最大値を設定する
+        request.set(new Uint8Array(bcntl), pos);
+        pos += bcntl.byteLength;
+        // CMD_AUTHAPI
+        request.set(new Uint8Array(cmd_authapi), pos);
+        pos += cmd_authapi.byteLength;
+        // parameter
+        request.set(new Uint8Array(parameter), pos);
+        // TODO:64バイトに満たない場合は0x00で満たす
+        return request.buffer;
     }
 }
