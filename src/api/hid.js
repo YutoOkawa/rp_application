@@ -50,7 +50,6 @@ export default {
      * @param {ArrayBuffer} report 
      */
     async sendReport(report) {
-        console.log(device);
         await device.sendReport(outputReportId, report);
     },
     /* -------------------HID Util Method.------------------- */
@@ -82,11 +81,12 @@ export default {
      * HIDに対応したRequestデータを生成する
      * @param {ArrayBuffer} channelID 
      * @param {ArrayBuffer} cmd_hid
+     * @param {int} length
      * @param {ArrayBuffer} cmd_authapi
      * @param {ArrayBuffer} parameter
      * @returns ArrayBuffer
      */
-    generateRequest(channelID, cmd_hid, cmd_authapi, parameter) {
+    generateRequest(channelID, cmd_hid, length, cmd_authapi, parameter) {
         var pos = 0;
         var request = new Uint8Array(64);
         // channelID
@@ -104,8 +104,8 @@ export default {
         // BCNTL
         var bcntl = new ArrayBuffer(2);
         var bcntl_buf = new Uint8Array(bcntl);
-        bcntl_buf[0] = 0x00;
-        bcntl_buf[1] = 0x59; // TODO:最大値を設定する
+        bcntl_buf[0] = length/256;
+        bcntl_buf[1] = length%256;
         request.set(new Uint8Array(bcntl), pos);
         pos += bcntl.byteLength;
         // CMD_AUTHAPI
@@ -113,7 +113,26 @@ export default {
         pos += cmd_authapi.byteLength;
         // parameter
         request.set(new Uint8Array(parameter), pos);
-        // TODO:64バイトに満たない場合は0x00で満たす
         return request.buffer;
+    },
+    /**
+     * 
+     * @param {ArrayBuffer} channelID 
+     * @param {ArrayBuffer} seq 
+     * @param {ArrayBuffer} parameter 
+     * @returns 
+     */
+    generateContinuation(channelID, seq, parameter) {
+        var pos = 0;
+        var continuatnion = new Uint8Array(64);
+        // channelID
+        continuatnion.set(new Uint8Array(channelID), pos);
+        pos += channelID.byteLength;
+        // seq
+        continuatnion.set(new Uint8Array(seq), pos);
+        pos += seq.byteLength;
+        // parameter
+        continuatnion.set(new Uint8Array(parameter), pos);
+        return continuatnion.buffer;
     }
 }

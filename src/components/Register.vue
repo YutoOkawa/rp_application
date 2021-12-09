@@ -213,25 +213,46 @@ export default {
 						}
 					} else if (this.platforms == "HID") {
 						// TODO:channelIDとcmdの作成をうまく関数化したい
+            // channelIDの設定
 						var channelID = new ArrayBuffer(4);
 						var channelID_buf = new Uint8Array(channelID);
 						for (var i=0; i<4; i++) {
 							channelID_buf[i] = 0xff;
             }
+            // HIDコマンドの設定(HID_CBOR)
 						var cmd_hid = new ArrayBuffer(1);
 						var cmd_hid_buf = new Uint8Array(cmd_hid);
 						cmd_hid_buf[0] = 0x90;
+            // AuthenticatorAPIのコマンド設定(MakeCredential:0x01)
             var cmd_authapi = new ArrayBuffer(1);
             var cmd_authapi_buf = new Uint8Array(cmd_authapi);
             cmd_authapi_buf[0] = 0x01;
-						// こんな感じで切り出しArrayBufferとってこれそう
-						// console.log(parameter_cbor.buffer.slice(0, this.hid_maxsize-9));
+            // パケット送信
 						if (parameter_cbor.length > this.hid_maxsize) { /* 分割パケットの場合 */
-							this.request = hid.generateRequest(channelID, cmd_hid, cmd_authapi, parameter_cbor.buffer.slice(0, this.hid_maxsize-9));
-              console.log(this.request);
+              // 切り出し位置の計算
+              var pos = 0;
+              pos += this.hid_maxsize-9;
+              // 継続パケットのパケットナンバー
+              var seq = new ArrayBuffer(1);
+							this.request = hid.generateRequest(channelID, cmd_hid, parameter_cbor.length, cmd_authapi, parameter_cbor.buffer.slice(0, pos));
 							await hid.sendReport(this.request);
+              // 継続パケットの送信
+              for (this.fragmentCount=0; this.fragmentCount<(parameter_cbor.length-this.hid_maxsize-9)/(this.hid_maxsize-5); this.fragmentCount++) {
+                if (this.fragmentCount>(parameter_cbor.length-this.hid_maxsize-9)/(this.hid_maxsize-5)) {
+                  this.fragment = hid.generateContinuation(channelID, seq, parameter_cbor.slice(pos, parameter_cbor.length));
+                  await hid.sendReport(this.fragment);
+                } else {
+                  this.fragment = hid.generateContinuation(channelID, seq, parameter_cbor.slice(pos, pos+this.hid_maxsize-5));
+                  await hid.sendReport(this.fragment);
+                }
+                // 切り出し位置更新
+                pos += this.hid_maxsize-5;
+                // パケットナンバー更新
+                var seq_buf = new Uint8Array(seq);
+                seq_buf[0]++;
+              }
 						} else {
-							this.request = hid.generateRequest(channelID, cmd_hid, cmd_authapi, parameter_cbor.buffer);
+							this.request = hid.generateRequest(channelID, cmd_hid, parameter_cbor.length, cmd_authapi, parameter_cbor.buffer);
 							await hid.sendReport(this.request);
 						}
 					}
