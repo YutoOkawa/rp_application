@@ -118,21 +118,23 @@ export default {
             this.atteRe(this.baseURL, this.clientDataJSON);
             this.gotInfo = true;
             this.encodeResponse = new Uint8Array(0);
-          }
+          } 
       },
       async handleInputReport(event) {
           this.gotInfo = false;
           var buffer = event.data.buffer;
           if (this.encodeResponse.byteLength == 0) { // 初回レスポンスでのデータサイズの取得
               let initialResponse = new Uint8Array(buffer);
-              this.packetsize = initialResponse[7]; // 6と合わせて取得する必要あり！
+              this.packetsize = initialResponse[6] * 256
+              this.packetsize += initialResponse[7];
               buffer = buffer.slice(9);
               this.encodeResponse = buffer;
           } else {
               this.encodeResponse = hid.concentenation(this.encodeResponse, buffer, this.packetsize);
           }
 
-          if (this.encodeResponse.byteLength == this.maxsize) { //登録レスポンスの作成
+          if (this.encodeResponse.byteLength == this.packetsize) { //登録レスポンスの作成
+              console.log(this.encodeResponse);
               this.atteRe(this.baseURL, this.clientDataJSON);
               this.gotInfo = true;
               this.encodeResponse = new Uint8Array(0);
@@ -240,10 +242,12 @@ export default {
               for (this.fragmentCount=0; this.fragmentCount<(parameter_cbor.length-this.hid_maxsize-9)/(this.hid_maxsize-5); this.fragmentCount++) {
                 if (this.fragmentCount>(parameter_cbor.length-this.hid_maxsize-9)/(this.hid_maxsize-5)) {
                   this.fragment = hid.generateContinuation(channelID, seq, parameter_cbor.slice(pos, parameter_cbor.length));
-                  await hid.sendReport(this.fragment);
+                  // await hid.sendReport(this.fragment);
+                  await this.sendReport(this.fragment);
                 } else {
                   this.fragment = hid.generateContinuation(channelID, seq, parameter_cbor.slice(pos, pos+this.hid_maxsize-5));
-                  await hid.sendReport(this.fragment);
+                  // await hid.sendReport(this.fragment);
+                  await this.sendReport(this.fragment);
                 }
                 // 切り出し位置更新
                 pos += this.hid_maxsize-5;
@@ -256,6 +260,9 @@ export default {
 							await hid.sendReport(this.request);
 						}
 					}
+      },
+      async sendReport(report) {
+          setTimeout(function(){hid.sendReport(report);}, 20);
       },
       async atteRe(baseURL, clientDataJSON) {
           /* json -> buffer -> base64url */

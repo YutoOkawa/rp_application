@@ -68,6 +68,8 @@ export default {
             let huyou = sumLength + b_segment.byteLength - maxsize;
             b_segment = b_segment.slice(0, -1*huyou);
             sumLength = maxsize;
+        } else {
+            sumLength += b_segment.byteLength;
         }
         // 連結配列の作成
         var whole = new Uint8Array(sumLength);
